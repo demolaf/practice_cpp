@@ -35,7 +35,7 @@ public:
 
     std::vector<std::string> terms() override
     {
-        return { name, club };
+        return { std::to_string(id), name, club };
     }
 
     std::string title() override
@@ -94,7 +94,7 @@ public:
     static void printPlayers(const std::vector<Player> players)
     {
         for (const auto& player : players) {
-            std::cout << "\nId: " << player.id << " Name: \n" << player.name << std::endl;
+            std::cout << "\nId: " << player.id << " Name: " << player.name << std::endl;
         }
     }
 
@@ -161,7 +161,9 @@ class App
 {
 public:
     App() 
-        : playerPool{ Player::players() } 
+        : playerPool{
+        Player::players()
+    }
     {
         Player::printPlayers(playerPool);
     }
@@ -185,8 +187,8 @@ private:
         {
             std::string name;
             std::cout << "\nType team " << i << " name: " << std::endl;
-            std::cin >> name;
-            // std::getline(std::cin, name);
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::getline(std::cin, name);
             Team team = Team{ name, {} };
             teams.push_back(team);
         }   
@@ -201,16 +203,34 @@ private:
             std::vector<Player> selectedPlayers{};
 
             std::cout << "\nSelect " << playersPerTeam << " players for team " << team.name << " by id:" << std::endl;
-
+            
             // Display to the user all players in the player pool
-            std::cout << "\nAll players: \n" << std::endl;
-            Player::printPlayers(playerPool);
+            // std::cout << "\nAll players: \n" << std::endl;
+            // Player::printPlayers(playerPool);
 
             // Loop through the max players per team and ask for a player
             for (int i = 0; i < playersPerTeam; ++i)
             {
+                // Prompt to search for a player
+                std::cout << "Do you want to search or select by inserting the id (y/n):" << std::endl;
+
+                // Search for player
+                char searchForPlayer;
+                std::cin >> searchForPlayer;
+
                 int selectedPlayerId;
-                std::cin >> selectedPlayerId;
+
+                if (searchForPlayer == 'y')
+                {
+                    selectedPlayerId = searchPlayers();
+                }
+                else 
+                {
+                    // Select by id
+                    std::cout << "Enter player id:" << std::endl;
+                    std::cin >> selectedPlayerId;
+                }
+
                 selectedPlayerIds.push_back(selectedPlayerId);
             }
 
@@ -225,10 +245,37 @@ private:
         }
     }
 
+    int searchPlayers()
+    {
+        std::string query;
+        std::cout << "Enter player name or club:" << std::endl;
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::getline(std::cin, query);
+
+        int playerFoundId = 0;
+
+        for (auto& player : playerPool)
+        {
+            for (auto& term : player.terms())
+            {
+                if (query == term)
+                {
+                    playerFoundId = player.getId();
+                    std::cout << "Players found:" << player.name << "\n" << std::endl;
+                }
+            }
+        }
+
+        if (playerFoundId == 0) {
+            std::cout << "Player not found" << std::endl;
+        }
+
+        return playerFoundId;
+    }
+
     std::vector<Team> teams;
     int noOfTeams;
     int playersPerTeam;
-
 private:
     std::vector<Player> playerPool;
 };
